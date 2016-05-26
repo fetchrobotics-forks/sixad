@@ -182,7 +182,11 @@ static void process_sixaxis(struct device_settings settings, const char *mac)
         }
 
         if (br < 0) {
-            break;
+            syslog(LOG_ERR, "Empty buffer, retrying.");
+            // Clear all buttons to zero state.
+            buf[3] = buf[4] = buf[5] = 0;
+            if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
+            if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
         } else if (br==50 && buf[0]==0xa1 && buf[1]==0x01 && buf[2]==0x00) { //only continue if we've got a Sixaxis
             if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
             if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
@@ -210,16 +214,11 @@ static void process_sixaxis(struct device_settings settings, const char *mac)
 
             if (ppoll(&p, 1, &timeout, &sigs) <= 0)
             {
-                syslog(LOG_ERR, "Controller connection timed out. Please re-pair.");
-
-                // Clear all buttons to zero state and send a final update.
+                syslog(LOG_ERR, "Controller connection timed out, retrying.");
+                // Clear all buttons to zero state.
                 buf[3] = buf[4] = buf[5] = 0;
                 if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
                 if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
-
-                // Disconnect.
-                sig_term(0);
-                break;
             }
         }
     }
