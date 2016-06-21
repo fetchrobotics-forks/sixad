@@ -162,6 +162,7 @@ static void rumble_listen()
 static void process_sixaxis(struct device_settings settings, const char *mac)
 {
     int br;
+    int failed_cycles = 0;
     bool msg = true;
     unsigned char buf[128];
 
@@ -182,14 +183,16 @@ static void process_sixaxis(struct device_settings settings, const char *mac)
         }
 
         if (br < 0) {
-            syslog(LOG_ERR, "Empty buffer, retrying.");
             // Clear all buttons to zero state.
             buf[3] = buf[4] = buf[5] = 0;
             if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
             if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
+            syslog(LOG_ERR, "Failed to read from device, exiting.");
+            break;
         } else if (br==50 && buf[0]==0xa1 && buf[1]==0x01 && buf[2]==0x00) { //only continue if we've got a Sixaxis
             if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
             if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
+            failed_cycles = 0;
         } else if (br==50 && buf[0]==0xa1 && buf[1]==0x01 && buf[2]==0xff) {
             if (debug) syslog(LOG_ERR, "Got 0xff Sixaxis buffer, ignored");
         } else if (buf[0]==0xa1 && buf[1]==0x01 && buf[2]==0x00) {
@@ -219,6 +222,14 @@ static void process_sixaxis(struct device_settings settings, const char *mac)
                 buf[3] = buf[4] = buf[5] = 0;
                 if (settings.joystick.enabled) do_joystick(ufd->js, buf, settings.joystick);
                 if (settings.input.enabled) do_input(ufd->mk, buf, settings.input);
+                failed_cycles++;
+            }
+
+            if (failed_cycles > 250)
+            {
+                // Disconnect.
+                sig_term(0);
+                break;
             }
         }
     }
