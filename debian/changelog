@@ -1,3 +1,9 @@
+sixad (1.6.1~trusty1fetch2) trusty; urgency=medium
+
+  * Alternate fix for timeout
+
+ -- Michael Ferguson <mferguson@fetchrobotics.com>  Mon, 20 Jun 2016 17:29:59 -0700
+
 sixad (1.6.1~trusty1fetch1) trusty; urgency=medium
 
   * Zero joy values but do not exit when timed out.
