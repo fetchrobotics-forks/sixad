@@ -1,3 +1,9 @@
+sixad (1.6.1~trusty1fetch1) trusty; urgency=medium
+
+  * Zero joy values but do not exit when timed out.
+
+ -- Michael Ferguson <mferguson@fetchrobotics.com>  Wed, 25 May 2016 18:55:53 -0700
+
 sixad (1.6.0~vivid1) vivid; urgency=medium
 
   * Release to Vivid.
